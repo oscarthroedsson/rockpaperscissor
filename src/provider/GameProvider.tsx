@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import type { Dispatch, SetStateAction } from "react";
 
 import { GameContext } from "../context/GameController.context";
+import { winConditions } from "../constant/game.constants";
 import { gameServiceSingelton } from "../service/gameService";
 import type { AllGames, Game, MoveEnum, Player, Round } from "../game.types";
 
@@ -12,13 +13,18 @@ export interface GameContextType {
   game: Game | null;
   setGame: Dispatch<SetStateAction<Game | null>>;
 
+  rounds: number;
+  setRounds: Dispatch<SetStateAction<number>>;
+
+  scoreBoard: { player1: number; player2: number };
+
   // Queries
   gamesQuery: UseQueryResult<AllGames, Error>;
   GameQuery: (gameId: string) => UseQueryResult<Game, Error>;
   RoundQuery: (gameId: string, roundId: string) => UseQueryResult<Game["currentRound"], Error>;
 
   // Mutations
-  startGame: UseMutationResult<{ game: Game; players: Player[] }, Error, { pOne: string; pTwo: string }>;
+  newGame: UseMutationResult<{ game: Game; players: Player[] }, Error, { pOne: string; pTwo: string }>;
   move: UseMutationResult<Round, Error, { playerId: string; gameId: string; move: MoveEnum }>;
 
   isGameOver: boolean;
@@ -26,7 +32,27 @@ export interface GameContextType {
 
 export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [game, setGame] = useState<Game | null>(null);
+  const [rounds, setRounds] = useState<number>(3);
   const queryClient = useQueryClient();
+
+  const scoreBoard = useMemo(() => {
+    if (!game?.finishedRounds || game.finishedRounds.length === 0) {
+      return { player1: 0, player2: 0 };
+    }
+
+    let p1Score = 0;
+    let p2Score = 0;
+
+    for (const round of game.finishedRounds) {
+      if (winConditions[round.player1Move] === round.player2Move) {
+        p1Score++;
+      } else if (winConditions[round.player2Move] === round.player1Move) {
+        p2Score++;
+      }
+    }
+
+    return { player1: p1Score, player2: p2Score };
+  }, [game?.finishedRounds]);
 
   const gamesQuery = useQuery<AllGames, Error>({
     queryKey: ["games"],
@@ -48,7 +74,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       enabled: !!gameId && !!roundId,
     });
 
-  const startGame = useMutation<{ game: Game; players: Player[] }, Error, { pOne: string; pTwo: string }>({
+  const newGame = useMutation<{ game: Game; players: Player[] }, Error, { pOne: string; pTwo: string }>({
     mutationKey: ["start-game"],
     mutationFn: async ({ pOne, pTwo }) => {
       const newGame = await gameServiceSingelton.createGame();
@@ -73,7 +99,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       console.log("On success MOVE: ", newMove);
       console.log("variables: ", variables);
 
-      // If both players have made their moves, invalidate the game query to trigger refetch
+      /**
+       * TODO take note that the response is not to be trusted
+       * When player X sends in a move we sometimes get back that it was player Y that made a move
+       */
+
       if (newMove.player1Move && newMove.player2Move) {
         console.log("🌈 call game query");
         const updatedGame = await queryClient.fetchQuery({
@@ -98,13 +128,19 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       value={{
         game,
         setGame,
+
+        rounds,
+        setRounds,
+
+        scoreBoard,
+
         gamesQuery,
         GameQuery,
         RoundQuery,
-        startGame,
+        newGame,
         move,
 
-        isGameOver: game?.finishedRounds.length === 3,
+        isGameOver: game?.finishedRounds.length === rounds,
       }}
     >
       {children}
