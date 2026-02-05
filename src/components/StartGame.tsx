@@ -4,14 +4,15 @@ import { useGame } from "../hook/useGameController";
 import Loading from "./Loading";
 
 export default function StartGame() {
-  const { game, startGame } = useGame();
+  const { game, newGame } = useGame();
   const [pOne, setPOne] = useState("");
   const [pTwo, setPTwo] = useState("");
-  const { mutateAsync, isPending } = startGame;
+  const [rounds, setRounds] = useState(3);
+  const { mutateAsync, isPending } = newGame;
 
   // Validate if players can start the game -  used on btn
   const nameRegex = /^[A-Za-z]{3,}$/;
-  const isValid = nameRegex.test(pOne.trim()) && nameRegex.test(pTwo.trim());
+  const isValid = nameRegex.test(pOne.trim()) && nameRegex.test(pTwo.trim()) && rounds >= 3;
 
   useEffect(() => {
     if (game) console.log("👾 Game: ", game);
@@ -61,6 +62,21 @@ export default function StartGame() {
             onChange={(e) => setPTwo(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-amber-400"
           />
+        </label>
+
+        <label className="flex flex-col">
+          Rounds
+          <input
+            name="playerTwo"
+            type="number"
+            placeholder="Player Two Name"
+            value={rounds}
+            min={3}
+            max={10}
+            onChange={(e) => setRounds(Number(e.target.value))}
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-amber-400"
+          />
+          <p className="text-xs text-slate-400">minimun rounds is 3 & maximum is 10</p>
         </label>
 
         <button
