@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+import Scoreboard from "./components/Score/Scoreboard";
 import PlayerSection from "./components/PlayerSection";
-import Scoreboard from "./components/Scoreboard";
 import { GameProvider } from "./provider/GameProvider";
 import StartGame from "./components/StartGame";
 import EndGame from "./components/EndGame";
@@ -10,6 +10,11 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      retryDelay: 200,
+      gcTime: 5 * 60 * 1000, // 5min
+      staleTime: 10_000, // 10 sek
     },
   },
 });
@@ -24,7 +29,7 @@ function App() {
           <EndGame />
           <PlayerSection player="player1" />
           <div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 
+            className="absolute z-9 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 
              text-5xl font-bold text-white"
             style={{
               fontFamily: '"Fredoka One", cursive',

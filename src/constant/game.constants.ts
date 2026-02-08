@@ -1,4 +1,4 @@
-import type { MoveEnum } from "../game.types";
+import type { MoveEnum } from "../types/game.types";
 
 export const moves: MoveEnum[] = ["ROCK", "PAPER", "SCISSOR"];
 

@@ -1,30 +1,25 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { useGame } from "../hook/useGameController";
 import Loading from "./Loading";
 
 export default function StartGame() {
-  const { game, newGame } = useGame();
   const [pOne, setPOne] = useState("");
   const [pTwo, setPTwo] = useState("");
-  const [rounds, setRounds] = useState(3);
+
+  const { game, newGame, rounds, setRounds } = useGame();
   const { mutateAsync, isPending } = newGame;
 
-  // Validate if players can start the game -  used on btn
   const nameRegex = /^[A-Za-z]{3,}$/;
   const isValid = nameRegex.test(pOne.trim()) && nameRegex.test(pTwo.trim()) && rounds >= 3;
-
-  useEffect(() => {
-    if (game) console.log("👾 Game: ", game);
-  }, [game]);
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!isValid) return;
-
     try {
       const data = await mutateAsync({ pOne, pTwo });
-
+      setPOne("");
+      setPTwo("");
       console.log("🥏 GAME: ", data);
     } catch (err) {
       console.error("[StartGame]: err: ", err);
@@ -82,10 +77,11 @@ export default function StartGame() {
         <button
           type="submit"
           disabled={!isValid}
-          className={`w-full text-sm font-semibold px-4 py-2 rounded-md transition-colors
+          aria-label="Start new game with provided player names and rounds"
+          className={`w-full text-sm font-semibold px-4 py-2 rounded-md transition-colors min-h-10
                       ${isValid ? "bg-amber-400 hover:bg-amber-500" : "bg-slate-400 text-slate-600 cursor-not-allowed"}`}
         >
-          {isPending ? <Loading isLoading={isPending} /> : "Start"}
+          {isPending ? <Loading isLoading={true} /> : "Start"}
         </button>
       </form>
     </div>

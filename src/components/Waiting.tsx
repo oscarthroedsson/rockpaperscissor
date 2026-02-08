@@ -4,6 +4,7 @@ import { moveImages, moves } from "../constant/game.constants";
 
 export default function Waiting({ choosen }: { choosen: string | null }) {
   const [animIndex, setAnimIndex] = useState(0);
+
   useEffect(() => {
     if (!choosen) return;
 
