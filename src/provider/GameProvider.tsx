@@ -1,5 +1,5 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
-import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
+import type { UseMutationResult } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { Dispatch, SetStateAction } from "react";
@@ -7,7 +7,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { GameContext } from "../context/GameController.context";
 import { gameApi } from "../service/gameService";
 import { getUrl, setUrl } from "../service/urlService";
-import type { AllGames, FinishedRound, Game, MoveEnum, Player, Round } from "../types/game.types";
+import type { FinishedRound, Game, MoveEnum, Player, Round } from "../types/game.types";
 
 export interface GameContextType {
   game: Game | null;
@@ -16,12 +16,6 @@ export interface GameContextType {
   rounds: number;
   setRounds: Dispatch<SetStateAction<number>>;
 
-  // Queries
-  gamesQuery: UseQueryResult<AllGames, Error>;
-  GameQuery: (gameId: string) => UseQueryResult<Game, Error>;
-  RoundQuery: (gameId: string, roundId: string) => UseQueryResult<Game["currentRound"], Error>;
-
-  // Mutations
   newGame: UseMutationResult<{ game: Game; players: Player[] }, Error, { pOne: string; pTwo: string }>;
   move: UseMutationResult<Round, Error, { playerId: string; gameId: string; move: MoveEnum }>;
 
@@ -35,9 +29,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const loadGame = async () => {
       const urlData = getUrl();
+
       if (!urlData || game) return;
 
-      console.log("📂 LOAD GAME IS RUN");
+      // Get current game when user hard re-fresh
       try {
         const existingGame = await gameApi.getGame(urlData.id);
         setGame(existingGame);
@@ -48,7 +43,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
               ? 3
               : existingGame.finishedRounds.length,
         );
-        console.log("Loaded game:", existingGame);
       } catch (error) {
         console.error("Failed to load game from URL:", error);
       }
@@ -56,33 +50,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     loadGame();
   }, [game]);
 
-  // Not using
-  const gamesQuery = useQuery<AllGames, Error>({
-    queryKey: ["games"],
-    queryFn: () => gameApi.getAll(),
-  });
-
-  // not using
-  const GameQuery = (gameId: string) => {
-    return useQuery<Game, Error>({
-      queryKey: ["game", gameId],
-      queryFn: () => gameApi.getGame(gameId),
-      enabled: !!gameId,
-    });
-  };
-
-  // Not using
-  const RoundQuery = (gameId: string, roundId: string) =>
-    useQuery<Game["currentRound"], Error>({
-      queryKey: ["round", gameId, roundId],
-      queryFn: () => gameApi.getRound(gameId, roundId),
-      enabled: !!gameId && !!roundId,
-    });
-
   // using
   const newGame = useMutation<{ game: Game; players: Player[] }, Error, { pOne: string; pTwo: string }>({
     mutationKey: ["start-game"],
-
     mutationFn: async ({ pOne, pTwo }) => {
       const newGame = await gameApi.createGame();
 
@@ -97,6 +67,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         game: { ...newGame, player1, player2 },
         players: [player1, player2],
       };
+    },
+    onError: (err) => {
+      // For Dev if something happens that I missed while developing
+      console.error("🚨Error [GameProvider | newGame]: ", { ...err });
     },
     onSuccess: ({ game }) => setGame(game),
   });
@@ -127,13 +101,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       return { game, playerKey };
     },
     mutationFn: ({ playerId, gameId, move }) => gameApi.move(playerId, gameId, move),
-    onError: (_, __, context) => {
+    onError: (err, __, context) => {
       if (context?.game) setGame(context.game); // Rollback on game-state
+
+      // For Dev if something happens that I missed while developing
+      console.error("🚨Error [GameProvider | move]: ", { ...err });
     },
     onSuccess: async (move) => {
       if (!move?.player1Move || !move.player2Move) return;
-
-      console.log("MOVE: ", move);
 
       setGame((prev) => {
         if (!prev) return prev;
@@ -155,9 +130,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         rounds,
         setRounds,
 
-        gamesQuery,
-        GameQuery,
-        RoundQuery,
         newGame,
         move,
 

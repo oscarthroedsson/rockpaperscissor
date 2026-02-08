@@ -16,13 +16,14 @@ export default function StartGame() {
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!isValid) return;
+
     try {
-      const data = await mutateAsync({ pOne, pTwo });
-      setPOne("");
-      setPTwo("");
-      console.log("🥏 GAME: ", data);
+      await mutateAsync({ pOne, pTwo });
     } catch (err) {
       console.error("[StartGame]: err: ", err);
+    } finally {
+      setPOne("");
+      setPTwo("");
     }
   }
 

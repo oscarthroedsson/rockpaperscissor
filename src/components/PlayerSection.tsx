@@ -5,7 +5,7 @@ import Waiting from "./Waiting";
 
 export default function PlayerSection({ player }: { player: "player1" | "player2" }) {
   const { game, move } = useGame();
-  const { mutateAsync, error } = move;
+  const { mutateAsync } = move;
 
   const currPlayer = game?.[player] || null;
   const currPlayerMove = game?.currentRound?.[`${player}Move`] || null;
@@ -16,14 +16,9 @@ export default function PlayerSection({ player }: { player: "player1" | "player2
       console.error({ game, currPlayer });
       return;
     }
-    console.log(`▶︎ ${player} just played`);
-    console.table(currPlayer);
 
-    const data = await mutateAsync({ playerId: currPlayer.id, gameId: game.id, move: selectedMove });
-    console.log("🚣🏼 MOVE: ", data);
+    await mutateAsync({ playerId: currPlayer.id, gameId: game.id, move: selectedMove });
   };
-
-  if (error) console.log("ERROR: ", error);
 
   return (
     <div
