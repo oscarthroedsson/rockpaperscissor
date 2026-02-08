@@ -30,7 +30,7 @@ export default function RoundHistory({ rounds, player1Name, player2Name }: Props
             <div className="flex items-center gap-2">
               <span className="truncate max-w-10 text-xs">{player1Name || "Player 1"}</span>
               <img
-                src={moveImages[round.player2Move]}
+                src={moveImages[round.player1Move]}
                 alt={`${player1Name} did ${round.player1Move}`}
                 className="w-6 h-6 object-contain shrink-0"
               />

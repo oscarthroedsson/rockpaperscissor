@@ -1,4 +1,3 @@
-// urlService.ts
 export function getUrl(): { id: string; rounds: number | null } | null {
   const path = window.location.pathname.slice(1);
   if (!path) return null;

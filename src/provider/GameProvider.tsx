@@ -50,7 +50,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     loadGame();
   }, [game]);
 
-  // using
   const newGame = useMutation<{ game: Game; players: Player[] }, Error, { pOne: string; pTwo: string }>({
     mutationKey: ["start-game"],
     mutationFn: async ({ pOne, pTwo }) => {
@@ -75,7 +74,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     onSuccess: ({ game }) => setGame(game),
   });
 
-  // using
   const move = useMutation<
     Round, // res
     Error,
